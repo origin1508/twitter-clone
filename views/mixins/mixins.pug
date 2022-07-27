@@ -1,0 +1,9 @@
+//- mixin을 이용해서 post ui 요소를 재사용할 수 있게 만드는 방법
+mixin createPostForm(userLoggedIn)
+    .postFormContainer 
+        .userImageContainer 
+            img(src=userLoggedIn.profilePic, alt="User's profile picture")
+        .textareaContainer 
+            textarea#postTextarea(placeholder="What's happening?")
+            .buttonsContainer 
+                button#submitPostButton(disabled="") Post
