@@ -15,8 +15,13 @@ app.set("views", "views"); // views는 views를 참조
 
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: false })); // body가 key value쌍으로 이루어진 값만 포함하겠다고 제한 true라면 모든 데이터 유형이 올 수 있음. 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public"))); // static파일의 경로를 public폴더로 지정
 
+// session 설정 
+// secret: 이 값을 가지고 hash하게 된다.
+// resave: 요청이 왔을 때 session이 수정되지 않았더라도 저장할지 선택하는 옵션
+// saveUninitialized: 초기화 되지 않은 세션이 저장소에 저장되도록 강제하는 옵션
 app.use(session({
     secret: "bbq chips",
     resave: true,
@@ -28,10 +33,13 @@ const loginRoute = require('./routes/loginRoutes'); // loginRoutes모듈을 불�
 const registerRoute = require('./routes/registerRoutes');
 const logoutRoute = require('./routes/logoutRoutes');
 
+//API routes
+const postsApiRoute = require('./routes/api/posts');
 
 app.use("/login", loginRoute); // 라우터 모듈 연결.. loginRoute모듈을 /login 하위 경로로 연결하겠다
 app.use("/register", registerRoute);
 app.use("/logout", logoutRoute);
+app.use("/api/posts", postsApiRoute);
 
 app.get("/", middleware.requireLogin, (req, res, next) => {
     // 사이트 루트에 접근할 때 먼저 middleware단계를 실행한다.

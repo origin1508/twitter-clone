@@ -8,7 +8,8 @@ const User = require('../schemas/UserSchema')
 app.set("view engine", "pug");
 app.set("views", "views");
 
-app.use(express.urlencoded({ extended: false })); 
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 router.get("/", (req, res, next) => {
     

@@ -9,6 +9,7 @@ app.set("view engine", "pug");
 app.set("views", "views");
 
 app.use(express.urlencoded({ extended: false })); // body가 key value쌍으로 이루어진 값만 포함하겠다고 제한 true라면 모든 데이터 유형이 올 수 있음. 
+app.use(express.json());
 
 router.get("/", (req, res, next) => {
     
@@ -28,7 +29,7 @@ router.post("/", async (req, res, next) => {
     if(firstName && lastName && username && email && password) {
         // 컬렉션에서 하나의 문서를 찾는 것을 의미 (문서 = database table)
         const user = await User.findOne({
-            // or 연산자를 통해서 username또는 email을 찾는다. 해당하는 user가 있다면
+            // or 연산자를 통해서 username또는 email을 찾는다. 해당하는 user 여부
             $or: [
                 { username: username },
                 { email: email }
