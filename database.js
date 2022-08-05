@@ -10,6 +10,10 @@ const mongoose = require('mongoose');
 // useNewUrlParser, useUnifiedTopology, useFindAndModify, and useCreateIndex are no longer supported options.
 // Mongoose 6 always behaves as if useNewUrlParser, useUnifiedTopology, and useCreateIndex are true, 
 // and useFindAndModify is false. Please remove these options from your code.
+const path = require('path');
+require('dotenv').config({
+    path: path.join(__dirname, '.env')
+})
 
 
 class database {
@@ -19,7 +23,7 @@ class database {
     }
 
     connect() {
-        mongoose.connect('mongodb+srv://admin:!00Entks12ok@twitterclonecluster.9xdhupm.mongodb.net/?retryWrites=true&w=majority')
+        mongoose.connect(process.env.MONGO_URI)
         .then(() => {
             console.log("database connection successful");
         })

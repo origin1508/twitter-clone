@@ -10,11 +10,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 router.get("/", (req, res, next) => {
-
+    Post.find({})
+    .populate("postedBy")
+    .then(results => res.status(200).send(results))
+    .catch(err => {
+        console.log(err);
+        res.sendStatus(400);
+    })
 });
 
 router.post("/", async (req, res, next) => {
-    
+
     if (!req.body.content) {
         console.log("Content param not sent with request");
         res.sendStatus(400);
@@ -28,7 +34,7 @@ router.post("/", async (req, res, next) => {
 
     Post.create(postData)
     .then(async newPost => {
-        newPost = await User.populate(newPost, { path: "postedBy" }); // postedBy 필드를 User 스키마로 채우게 된다.
+        newPost = await User.populate(newPost, { path: "postedBy" }); // postedBy 필드를 User 컬렉션이랑 합친다?
         res.status(201).send(newPost);
     })
     .catch(err => {

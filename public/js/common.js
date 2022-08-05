@@ -4,7 +4,7 @@
 
 const submitPostButton = document.querySelector('#submitPostButton');
 const postTextarea = document.querySelector('#postTextarea');
-const postsContainer = document.querySelector('.postsContainer')
+const postsContainer = document.querySelector('.postsContainer');
 
 postTextarea.addEventListener('keyup', (e) => {
 
@@ -47,12 +47,13 @@ submitPostButton.addEventListener('click', (e) => {
         button.disabled = true;
 
     })
-    .catch(err => {})
+    .catch(err => {console.log(err)})
 });
 
 function createPostHtml(postData) {
 
     const postedBy = postData.postedBy;
+
     const displayName = postedBy.firstName + " " + postedBy.lastName;
     const timestamp = postedBy.createdAt;
 
