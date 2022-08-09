@@ -46,8 +46,10 @@ app.get("/", middleware.requireLogin, (req, res, next) => {
     // payload는 함수나 페이지나 요청같은 것을 저장하는 객체
     var payload = {
         pageTitle: "Home",
-        userLoggedIn: req.session.user
+        userLoggedIn: req.session.user,
+        userLoggedInJS: JSON.stringify(req.session.user)
     }
 // middleware를 이용하면 로그인이 되어있는지 검사를 하여 리다이렉팅을 할 수 있다.
     res.status(200).render("home", payload); // 페이지(템플릿을 렌더링할.), 페이로드(보내고 싶은 데이터.)- => 서버에서 템플릿으로 데이터를 전달
+    // payload는 rendering 하는 동안에만 사용이 가능하다 렌더링 된 후에는 액세스 할 수 없다.
 })

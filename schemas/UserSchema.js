@@ -10,7 +10,8 @@ const UserSchema = new Schema({
     username: { type: String, required: true, trim: true, unique: true },
     email: { type: String, required: true, trim: true, unique: true },
     password: { type: String, required: true, },
-    profilePic: { type: String, default:"/images/profilePic.jpeg" }
+    profilePic: { type: String, default:"/images/profilePic.jpeg" },
+    likes: [{ type: Schema.Types.ObjectId, ref: 'Post' }]
     // timestaps를 추가
 }, { timestamps: true });
 // model: model을 내보내거나 선언하는 함수
