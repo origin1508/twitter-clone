@@ -51,7 +51,7 @@ submitPostButton.addEventListener('click', (e) => {
 });
 
 // 좋아요버튼 구현
-// 동적콘텐츠이기 때문에 이 코드가 실행될 때에는 해당 버튼이 페이지에 존재하지 않는다. 따라서 이벤트가 발생하지 않음
+// 동적콘텐츠이기 때문에 이 코드가 실행될 때에는 해당 버튼이 페이지에 존재하지 않는다(렌더x). 따라서 이벤트가 발생하지 않음
 // likeButton.addEventListener('click', (e) => {
 //     const button = e.target;
 //     alert('button clicked')
@@ -60,18 +60,34 @@ submitPostButton.addEventListener('click', (e) => {
 // $(document).on('click', '.likeButton', (e) => {
 //     const button = $(e.target);
 //     const postId = getPostIdFromElement(button);
-//     console.log(postId);
+    
+//     if (postId === undefined) return;
+
+//     $.ajax({
+//         url: '/api/posts/${postId}/like',
+//         type: 'PUT',
+//         success: (postData) => {
+
+//             button.find('span'),text(postData.likes.length || "");
+
+//             if(postData.likes.includes(userLoggedIn._id)) {
+//                 button.addClass('active');
+//             }
+//             else {
+//                 button.removeClass('active');
+//             }
+//         }
+//     })
 // })
 
 document.addEventListener('click', e => {
+    // e.target은 실제 클릭된 요소를 가리킴
     const target = e.target;
     const postId = getPostIdFromElement(target);
 
-
-    // e.target은 실제 클릭된 요소를 가리킴
+    // likeButton
     // button i, button span { pointer-events: none;} CSS 속성을 추가했더니 
-    // || target.parentNode.className.includes('likeButton') <= 없어도 button 자식태그들을 선택해도 이벤트가 잘 일어남
-
+    // || target.parentNode.className.includes('likeButton') <= 없어도 button 자식 요소들을 선택해도 무시? button에 해당하는 이벤트가 잘 일어남
     if (target.className.includes('likeButton')) {
         if(postId === undefined) return;
 
@@ -93,6 +109,30 @@ document.addEventListener('click', e => {
             }
             
         })
+    };
+
+    // retweetButton
+    if (target.className.includes('retweetButton')) {
+        if(postId === undefined) return;
+
+        fetch(`/api/posts/${postId}/retweet`, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+        }).then(res => res.json())
+        .then(postData => {
+
+            target.querySelector('span').innerText = postData.retweetUsers.length || "";
+
+            if (postData.retweetUsers.includes(userLoggedIn._id)) {
+                target.classList.add('active');
+            }
+            else {
+                target.classList.remove('active');
+            }
+            
+        })
     }
 })
 
@@ -105,7 +145,9 @@ function getPostIdFromElement(element) {
 
     // 포스트 이외 곳을 누르면 rootElement의 값이 null이라 오류발생 예외처리
     if (!rootElement) return;
+
     const postId = rootElement.dataset.id;
+    // const postId = rootElement.data('id')
 
     if(postId === undefined) return alert("Post id undefined");
 
@@ -114,16 +156,42 @@ function getPostIdFromElement(element) {
 
 function createPostHtml(postData) {
 
+    if (postData === null) return alert('post object is null');
+
+    // 해당 post가 retweet한 post의 id를 가지고 있다면 true, 아니라면 false
+    const isRetweet = postData.retweetData !== undefined;
+    // retweet이라면
+    const retweetedBy = isRetweet ? postData.postedBy.username : null;
+    postData = isRetweet ? postData.retweetData : postData;
+
+    console.log(isRetweet)
+
     const postedBy = postData.postedBy;
+
+    if (postedBy._id === undefined) {
+        return console.log('User object not populated')
+    }
 
     const displayName = postedBy.firstName + " " + postedBy.lastName;
     const timestamp = timeDifference(new Date(), new Date(postData.createdAt));
 
-    // 새로고침 하여도 클래스를 갖게 해서 색상이 적용 되도록 구현
+    // 새로고침 하여도 active클래스를 갖게 해서 색상이 적용 되도록 구현
+    // payload에서 담겨진 userLoggedIn을 통해서 id를 가져옴
     const likeButtonActiveClass = postData.likes.includes(userLoggedIn._id) ? "active" : "";
+    const retweetButtonActiveClass = postData.retweetUsers.includes(userLoggedIn._id) ? "active" : "";
+
+    let retweetText = '';
+    if (isRetweet) {
+        retweetText = `<span>
+                            <i class="fa-solid fa-retweet"></i>
+                            Retweeted by <a href='/profile/${retweetedBy}'>@${retweetedBy}</a>
+                        </span>`
+    }
 
     return `<div class='post' data-id='${postData._id}'>
-
+                <div class='postActionContainer'>
+                    ${retweetText}
+                </div>
                 <div class='mainContentContainer'>
                     <div class='userImageContainer'>
                         <img src='${postedBy.profilePic}'>
@@ -144,8 +212,9 @@ function createPostHtml(postData) {
                                 </button>
                             </div>
                             <div class='postButtonContainer green'>
-                                <button class='retweet'>
+                                <button class='retweetButton ${retweetButtonActiveClass}'>
                                     <i class="fa-solid fa-retweet"></i>
+                                    <span>${postData.retweetUsers.length || ""}</span>
                                 </button>
                             </div>
                             <div class='postButtonContainer red'>
