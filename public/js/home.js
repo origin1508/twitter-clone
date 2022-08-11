@@ -13,16 +13,3 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => {console.log(err)})
 })
-
-function outputPosts(results, container) {
-    container.innerText = "";
-
-    results.forEach(result => {
-        const html = createPostHtml(result);
-        container.prepend(html);
-    });
-
-    if (results.length == 0) {
-        container.append("<span class='noResults'>Nothing to show.</span>")
-    }
-}

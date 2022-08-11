@@ -1,54 +1,116 @@
-
-//$(document).ready(() => { alert("안녕하세요!")}); document ready handler 문서 페이지가 준비되고 모든 종속성이 로드될 때까지 사용되거나 실행되지 않는다.
-// $("#postTextarea").keyup((e) => { jquery문법을 이용
-
+d//$(document).ready(() => { alert("안녕하세요!")}); document ready handler 문서 페이지가 준비되고 모든 종속성이 로드될 때까지 사용되거나 실행되지 않는다.
 const submitPostButton = document.querySelector('#submitPostButton');
 const postTextarea = document.querySelector('#postTextarea');
 const postsContainer = document.querySelector('.postsContainer');
 const likeButton = document.querySelector('.likeButton');
 
-postTextarea.addEventListener('keyup', (e) => {
+// Modal element
+const originalPostContainer = document.querySelector('#originalPostContainer');
+const replyModal = document.querySelector('#replyModal');
+const replyTextarea = document.querySelector('#replyTextarea');
+const submitReplyButton = document.querySelector('#submitReplyButton');
 
-    const textbox = e.target;
-    const value = textbox.value.trim(); // textbox.val().trim() 차이가 뭘까?;
+// $("#postTextarea", #replayTextarea).keyup((e) => {
+//     var textbox = ${e.target};
+//     var value = textbox.val().trim();
+// }jquery문법을 이용
+[postTextarea, replyTextarea].forEach(textarea => {
+    textarea.addEventListener('keyup', (e) => {
 
-    if(submitPostButton.length == 0) return alert("no submit button found")
+        const textbox = e.target;
+        const value = textbox.value.trim();
 
-    if(value == "") {
-        submitPostButton.disabled = true;
-        return;
-    }
+        const isModal = textbox.closest('.modal') // 부모방향으로 순회하며 .modal을 찾으면 해당 노드를 없으면 null을 반환
+        // var isModal = textbox.parents(".modal").length == 1;
+        // null은 불리언에서 거짓으로 취급
+        const submitButton = isModal ? submitReplyButton : submitPostButton
 
-    submitPostButton.disabled = false;
-});
+        if(submitPostButton.length == 0) return alert("no submit button found")
+    
+        if(value == "") {
+            submitButton.disabled = true;
+            return;
+        }
+    
+        submitButton.disabled = false;
+    });
+}) 
+// buttonArray.forEach(button => console.log(button));
+// const buttonArray = [submitPostButton, submitReplyButton];
+// Array.form(submitPostButton, submitReplyButton).forEach(button => console.log(button));
+// [submitReplyButton, submitPostButton].forEach(button => console.log(button));
 
-submitPostButton.addEventListener('click', (e) => {
+const buttonArray = [submitPostButton, submitReplyButton];
+buttonArray.forEach(submitButton => {
+    submitButton.addEventListener('click', (e) => {
 
-    const button = e.target;
-    const textbox = postTextarea;
+        const button = e.target;
+        const isModal = button.closest('.modal');
+        const textbox = isModal ? replyTextarea : postTextarea;
 
-    // $.post("/api/posts", {content: textbox.value}, (postData, status, xhr) => {
-    //     alert(postData)
-    // })
-    fetch('/api/posts', {
-        method: 'POST',
+        const data = {
+            content: textbox.value,
+        }
+    
+        if (isModal) {
+            // 답장을 하고 있는 게시물을 post하기 직전에 id를 받아와 데이터에 추가 이를 위해 modal이 열릴 때 버튼에 data-id 생성
+            const id = button.dataset.id;
+            if (id === null) return alert("Button id is null");
+            data.replyTo = id;
+        }
+        
+        // $.post("/api/posts", {content: textbox.value}, (postData, status, xhr) => {
+        //     alert(postData)
+        // })
+        fetch('/api/posts', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
+        })
+        .then(res => res.json())
+        .then(postData => {
+
+            if (postData.replyTo) {
+                location.reload();
+            } else {
+                const html = createPostHtml(postData);
+                $(".postsContainer").prepend(html);
+                textbox.value = "";
+                button.disabled = true;
+            }
+                        
+        })
+        .catch(err => {console.log(err)})
+    });
+    
+})
+
+// reply
+// bootstrap이 제공하는 event를 이용
+replyModal.addEventListener('show.bs.modal', (e) => {
+// $('#replyModal').on('show.bs.modal', () => {})
+    const target = e.relatedTarget; // e.target은 modal을 가르킴 개발자도구를 통해 relatedTarget이 button이라는 것을 확인
+    const postId = getPostIdFromElement(target);
+    // dataset속성을 이용해서 data-id속성에 postId속성값을 가지도록 함
+    submitReplyButton.dataset.id = postId;
+
+    fetch(`/api/posts/${postId}`, {
+        method: 'GET',
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            content: textbox.value
         })
-    })
     .then(res => res.json())
-    .then(data => {
-        const html = createPostHtml(data);
-        $(".postsContainer").prepend(html);
-        textbox.value = "";
-        button.disabled = true;
-
+    .then(result => {
+        outputPosts(result, $('#originalPostContainer'));
     })
     .catch(err => {console.log(err)})
 });
+
+// modal hidden
+replyModal.addEventListener('hidden.bs.modal', () => originalPostContainer.innerText = "");
 
 // 좋아요버튼 구현
 // 동적콘텐츠이기 때문에 이 코드가 실행될 때에는 해당 버튼이 페이지에 존재하지 않는다(렌더x). 따라서 이벤트가 발생하지 않음
@@ -68,7 +130,7 @@ submitPostButton.addEventListener('click', (e) => {
 //         type: 'PUT',
 //         success: (postData) => {
 
-//             button.find('span'),text(postData.likes.length || "");
+//             button.find('span').text(postData.likes.length || "");
 
 //             if(postData.likes.includes(userLoggedIn._id)) {
 //                 button.addClass('active');
@@ -140,14 +202,15 @@ document.addEventListener('click', e => {
 function getPostIdFromElement(element) {
     // const isRoot = element.hasClass('post');
     // const isRoot = element.classList.contiains('post');
-    const rootElement = element.className === 'post' ? element : element.closest('.post');
-    // const postId = rootElement.data().id;
 
+    // closest메서드를 이용해 클래스명이 post인 요소를 찾을 때까지 부모 방향으로 순회
+    const rootElement = element.className === 'post' ? element : element.closest('.post');
+    
     // 포스트 이외 곳을 누르면 rootElement의 값이 null이라 오류발생 예외처리
     if (!rootElement) return;
 
     const postId = rootElement.dataset.id;
-    // const postId = rootElement.data('id')
+    // const postId = rootElement.data().id;
 
     if(postId === undefined) return alert("Post id undefined");
 
@@ -163,8 +226,6 @@ function createPostHtml(postData) {
     // retweet이라면
     const retweetedBy = isRetweet ? postData.postedBy.username : null;
     postData = isRetweet ? postData.retweetData : postData;
-
-    console.log(isRetweet)
 
     const postedBy = postData.postedBy;
 
@@ -188,26 +249,44 @@ function createPostHtml(postData) {
                         </span>`
     }
 
+    let replyFlag = "";
+    if (postData.replyTo) {
+
+        if (!postData.replyTo._id) {
+            return alert("ReplyTo is not populated");
+        }
+        else if (!postData.replyTo.postedBy._id) {
+            return alert("Posted by is not pupulated")
+        }
+
+        const replyToUsername = postData.replyTo.postedBy.username;
+        replyFlag = `<div class='replyFlag'>
+                        Replying to <a href='/profile/${replyToUsername}'>@${replyToUsername}</a>
+                    </div>`;
+    }
+
     return `<div class='post' data-id='${postData._id}'>
                 <div class='postActionContainer'>
                     ${retweetText}
                 </div>
                 <div class='mainContentContainer'>
                     <div class='userImageContainer'>
-                        <img src='${postedBy.profilePic}'>
+                        <img src='${postedBy.profilePic}' alt="User's profile picture">
                     </div>
                     <div class='postContentContainer'>
                         <div class='header'>
                             <a href='/profile/${postedBy.username}' class='displayName'>${displayName}</a>
-                            <span class='username'>${postedBy.username}</span>
+                            <span class='username'>@${postedBy.username}</span>
                             <span class='date'>${timestamp}</span>
                         </div>
+                        ${replyFlag}
                         <div class='postBody'>
                             <span>${postData.content}</span>
                         </div>
                         <div class='postFooter'>
                             <div class='postButtonContainer'>
-                                <button>
+                                <!-- BootStrap 버전에 따라 다를 수 있음 --!>
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#replyModal">
                                     <i class="fa-regular fa-comment"></i>
                                 </button>
                             </div>
@@ -267,6 +346,21 @@ function timeDifference(current, previous) {
     }
 }
 
+function outputPosts(results, container) {
+    container.innerText = "";
+
+    if (!Array.isArray(results)) {
+        results = [results]
+    }
+    results.forEach(result => {
+        const html = createPostHtml(result);
+        container.prepend(html);
+    });
+
+    if (results.length == 0) {
+        container.append("<span class='noResults'>Nothing to show.</span>")
+    }
+}
 // const post = document.createElement('div');
 // const mainContentContainer = document.createElement('div');
 // const userImageContainer = document.createElement('div');

@@ -9,20 +9,23 @@ const Post = require('../../schemas/PostSchema');
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-router.get("/", (req, res, next) => {
-    Post.find({})
-    .populate("postedBy")
-    .populate("retweetData")
-    .sort({ "createdAt": 1 })
-    .then(async results => {
-        results = await User.populate(results, { path: "retweetData.postedBy"});
-        res.status(200).send(results);
-    })
-    .catch(err => {
-        console.log(err);
-        res.sendStatus(400);
-    })
+router.get("/", async (req, res, next) => {
+
+    const results = await getPosts({});
+    res.status(200).send(results);
+
 });
+
+router.get("/:id", async (req, res, next) => {
+
+    const postId = req.params.id;
+    
+    const results = await getPosts({ _id: postId });
+    result = results[0]
+    res.status(200).send(result);
+   
+});
+
 
 router.post("/", async (req, res, next) => {
 
@@ -36,6 +39,10 @@ router.post("/", async (req, res, next) => {
         content: req.body.content,
         postedBy: req.session.user
     };
+
+    if (req.body.replyTo) {
+        postData.replyTo = req.body.replyTo;
+    }
 
     Post.create(postData)
     .then(async newPost => {
@@ -62,9 +69,6 @@ router.put("/:id/like", async (req, res, next) => {
     // 좋아요가 풀리지 않는 문제: 위에서 세션에서 likes를 가져왔기 때문에 현재 상태가 반영되지 않고 이전에 사용자 개체가 저장되어있기 때문에
     const option = isLiked ? '$pull' : '$addToSet' // 만약 배열에서 제거 하고 싶다면 $pull 연산자를 이용, 추가하고 싶다면 $addToSet
     
-    console.log("is liked: ", isLiked);
-    console.log("option: ", option);
-    console.log("userId: ", userId);
     // Insert user like
     // 좋아요가 풀리지 않는 문제를 해결하기 위해 업데이트 된 User정보를 req.session.user에 담아 해결
     // findByIdAndUpdate는 바뀐 유저 정보를 반환하지 않는다. 옵션으로 new: true를 주어서 반환하게 만든다.
@@ -128,5 +132,20 @@ router.post("/:id/retweet", async (req, res, next) => {
 
     res.status(200).json(post);
 });
+
+// 리팩터링 get 요청을 함수로 만들어 재사용하기 용이하게함
+async function getPosts(filter) {
+    return await Post.find(filter)
+    .populate("postedBy")
+    .populate("retweetData") //retweetData에 저장된 post._id를 Post컬렉션에서 찾아 각각 retweetData에 추가한다.
+    .populate("replyTo")
+    .sort({ "createdAt": 1 })
+    .then(async results => {
+        results = await User.populate(results, { path: "replyTo.postedBy"})
+        return await User.populate(results, { path: "retweetData.postedBy"}) // User 컬렉션을 resuls의 retweetData.postedBy로 찾아 추가한다.
+    })
+    .catch(err => console.log(err))
+
+}
 
 module.exports = router;
