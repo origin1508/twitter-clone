@@ -1,4 +1,4 @@
-d//$(document).ready(() => { alert("안녕하세요!")}); document ready handler 문서 페이지가 준비되고 모든 종속성이 로드될 때까지 사용되거나 실행되지 않는다.
+//$(document).ready(() => { alert("안녕하세요!")}); document ready handler 문서 페이지가 준비되고 모든 종속성이 로드될 때까지 사용되거나 실행되지 않는다.
 const submitPostButton = document.querySelector('#submitPostButton');
 const postTextarea = document.querySelector('#postTextarea');
 const postsContainer = document.querySelector('.postsContainer');
@@ -14,7 +14,11 @@ const submitReplyButton = document.querySelector('#submitReplyButton');
 //     var textbox = ${e.target};
 //     var value = textbox.val().trim();
 // }jquery문법을 이용
-[postTextarea, replyTextarea].forEach(textarea => {
+
+[postTextarea, replyTextarea]
+    .filter(item => item) // view post 페이지로 넘어갈때 postTextarea가 null이라 발생한 오류를 해결
+    .forEach(textarea => {
+
     textarea.addEventListener('keyup', (e) => {
 
         const textbox = e.target;
@@ -25,7 +29,7 @@ const submitReplyButton = document.querySelector('#submitReplyButton');
         // null은 불리언에서 거짓으로 취급
         const submitButton = isModal ? submitReplyButton : submitPostButton
 
-        if(submitPostButton.length == 0) return alert("no submit button found")
+        // if(submitPostButton.length == 0) return alert("no submit button found")
     
         if(value == "") {
             submitButton.disabled = true;
@@ -41,7 +45,9 @@ const submitReplyButton = document.querySelector('#submitReplyButton');
 // [submitReplyButton, submitPostButton].forEach(button => console.log(button));
 
 const buttonArray = [submitPostButton, submitReplyButton];
-buttonArray.forEach(submitButton => {
+buttonArray
+    .filter(item => item) // view post 페이지로 넘어갈때 submitPostButton가 null이라 발생한 오류를 해결
+    .forEach(submitButton => {
     submitButton.addEventListener('click', (e) => {
 
         const button = e.target;
@@ -104,7 +110,7 @@ replyModal.addEventListener('show.bs.modal', (e) => {
         })
     .then(res => res.json())
     .then(result => {
-        outputPosts(result, $('#originalPostContainer'));
+        outputPosts(result.postData, $('#originalPostContainer'));
     })
     .catch(err => {console.log(err)})
 });
@@ -195,7 +201,14 @@ document.addEventListener('click', e => {
             }
             
         })
-    }
+    };
+
+    if (target.closest('.post')  && target.tagName !== 'BUTTON') {
+        
+        if(postId !== undefined) {
+            window.location.href = '/posts/' + postId;
+        }
+    } 
 })
 
 // element의 class가 post인 것을 찾아서 data-id에 담긴 postId를 가져오는 함수
@@ -217,7 +230,7 @@ function getPostIdFromElement(element) {
     return postId;
 }
 
-function createPostHtml(postData) {
+function createPostHtml(postData, largeFont = false) {
 
     if (postData === null) return alert('post object is null');
 
@@ -240,6 +253,7 @@ function createPostHtml(postData) {
     // payload에서 담겨진 userLoggedIn을 통해서 id를 가져옴
     const likeButtonActiveClass = postData.likes.includes(userLoggedIn._id) ? "active" : "";
     const retweetButtonActiveClass = postData.retweetUsers.includes(userLoggedIn._id) ? "active" : "";
+    const largeFontClass = largeFont ? "largeFont" : "";
 
     let retweetText = '';
     if (isRetweet) {
@@ -250,7 +264,8 @@ function createPostHtml(postData) {
     }
 
     let replyFlag = "";
-    if (postData.replyTo) {
+    // postData.replyTo._id 조건을 추가해서 replypost를 retweet했을 때 해당하지 않게
+    if (postData.replyTo && postData.replyTo._id) {
 
         if (!postData.replyTo._id) {
             return alert("ReplyTo is not populated");
@@ -265,7 +280,7 @@ function createPostHtml(postData) {
                     </div>`;
     }
 
-    return `<div class='post' data-id='${postData._id}'>
+    return `<div class='post ${largeFontClass}' data-id='${postData._id}'>
                 <div class='postActionContainer'>
                     ${retweetText}
                 </div>
@@ -361,6 +376,28 @@ function outputPosts(results, container) {
         container.append("<span class='noResults'>Nothing to show.</span>")
     }
 }
+
+function outputPostsWithReplies(results, container) {
+    container.innerText = "";
+
+    if (results.replyTo !== undefined && results.replyTo._id !== undefined) {
+        const html = createPostHtml(results.replyTo);
+        container.append(html);
+    }
+
+    const mainPosthtml = createPostHtml(results.postData, true);
+    container.append(mainPosthtml);
+
+    results.replies.forEach(result => {
+        const html = createPostHtml(result, true);
+        container.append(html);
+    });
+
+    if (results.length == 0) {
+        container.append("<span class='noResults'>Nothing to show.</span>")
+    }
+}
+
 // const post = document.createElement('div');
 // const mainContentContainer = document.createElement('div');
 // const userImageContainer = document.createElement('div');

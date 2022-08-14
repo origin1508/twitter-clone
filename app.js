@@ -32,6 +32,7 @@ app.use(session({
 const loginRoute = require('./routes/loginRoutes'); // loginRoutes모듈을 불러온다.
 const registerRoute = require('./routes/registerRoutes');
 const logoutRoute = require('./routes/logoutRoutes');
+const postRoute = require('./routes/postRoutes');
 
 //API routes
 const postsApiRoute = require('./routes/api/posts');
@@ -39,12 +40,14 @@ const postsApiRoute = require('./routes/api/posts');
 app.use("/login", loginRoute); // 라우터 모듈 연결.. loginRoute모듈을 /login 하위 경로로 연결하겠다
 app.use("/register", registerRoute);
 app.use("/logout", logoutRoute);
+app.use("/posts", middleware.requireLogin, postRoute);
+
 app.use("/api/posts", postsApiRoute);
 
 app.get("/", middleware.requireLogin, (req, res, next) => {
     // 사이트 루트에 접근할 때 먼저 middleware단계를 실행한다.
     // payload는 함수나 페이지나 요청같은 것을 저장하는 객체
-    var payload = {
+    const payload = {
         pageTitle: "Home",
         userLoggedIn: req.session.user,
         userLoggedInJS: JSON.stringify(req.session.user)
