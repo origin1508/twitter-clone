@@ -4,11 +4,15 @@ const postTextarea = document.querySelector('#postTextarea');
 const postsContainer = document.querySelector('.postsContainer');
 const likeButton = document.querySelector('.likeButton');
 
-// Modal element
+// reply Modal element
 const originalPostContainer = document.querySelector('#originalPostContainer');
 const replyModal = document.querySelector('#replyModal');
 const replyTextarea = document.querySelector('#replyTextarea');
 const submitReplyButton = document.querySelector('#submitReplyButton');
+
+// delete Modal element
+const deletePostModal = document.querySelector('#deletePostModal');
+const deletePostButton = document.querySelector('#deletePostButton');
 
 // $("#postTextarea", #replayTextarea).keyup((e) => {
 //     var textbox = ${e.target};
@@ -118,7 +122,32 @@ replyModal.addEventListener('show.bs.modal', (e) => {
 // modal hidden
 replyModal.addEventListener('hidden.bs.modal', () => originalPostContainer.innerText = "");
 
-// 좋아요버튼 구현
+deletePostModal.addEventListener('show.bs.modal', (e) => {
+
+        const target = e.relatedTarget;
+        const postId = getPostIdFromElement(target);
+        deletePostButton.dataset.id = postId;
+
+});
+
+// delete post
+deletePostButton.addEventListener('click', (e) => {
+   const postId = e.target.dataset.id;
+   
+   fetch(`/api/posts/${postId}`, {
+    method: 'DELETE',
+    headers: {
+        "Content-Type": "application/json"
+    },
+    })
+    .then(() => {
+        location.reload();
+    })
+    .catch(err => {console.log(err)})
+
+});
+
+// jquery로 구현된 likeButton
 // 동적콘텐츠이기 때문에 이 코드가 실행될 때에는 해당 버튼이 페이지에 존재하지 않는다(렌더x). 따라서 이벤트가 발생하지 않음
 // likeButton.addEventListener('click', (e) => {
 //     const button = e.target;
@@ -203,13 +232,14 @@ document.addEventListener('click', e => {
         })
     };
 
-    if (target.closest('.post')  && target.tagName !== 'BUTTON') {
+    // to view post
+    if (target.closest('.post') && target.tagName !== 'BUTTON') {
         
         if(postId !== undefined) {
             window.location.href = '/posts/' + postId;
         }
     } 
-})
+});
 
 // element의 class가 post인 것을 찾아서 data-id에 담긴 postId를 가져오는 함수
 function getPostIdFromElement(element) {
@@ -280,6 +310,11 @@ function createPostHtml(postData, largeFont = false) {
                     </div>`;
     }
 
+    let buttons = "";
+    if (postData.postedBy._id == userLoggedIn._id) {
+        buttons = `<button data-id='${postData._id}' data-bs-toggle='modal' data-bs-target='#deletePostModal'><i class='fas fa-times'></i></button>`;
+    }
+
     return `<div class='post ${largeFontClass}' data-id='${postData._id}'>
                 <div class='postActionContainer'>
                     ${retweetText}
@@ -293,6 +328,7 @@ function createPostHtml(postData, largeFont = false) {
                             <a href='/profile/${postedBy.username}' class='displayName'>${displayName}</a>
                             <span class='username'>@${postedBy.username}</span>
                             <span class='date'>${timestamp}</span>
+                            ${buttons}
                         </div>
                         ${replyFlag}
                         <div class='postBody'>

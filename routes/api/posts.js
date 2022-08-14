@@ -92,7 +92,7 @@ router.put("/:id/like", async (req, res, next) => {
     const post = await Post.findByIdAndUpdate(postId, { [option]: { likes: userId } }, { new: true })
     .catch(err => {
         console.log(err);
-        res.sendStatus(400)
+        res.sendStatus(400);
     });
 
     res.status(200).json(post);
@@ -141,6 +141,15 @@ router.post("/:id/retweet", async (req, res, next) => {
     });
 
     res.status(200).json(post);
+});
+
+router.delete('/:id', (req, res, next) => {
+    Post.findOneAndDelete(req.params.id)
+        .then(() => res.sendStatus(202))
+        .catch(err => {
+            console.log(err);
+            res.sendStatus(400);
+        })
 });
 
 // 리팩터링 get 요청을 함수로 만들어 재사용하기 용이하게함
