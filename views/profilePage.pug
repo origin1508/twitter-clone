@@ -1,0 +1,44 @@
+extends layouts/main-layout.pug
+
+block content
+    if !profileUser
+        span.errorMessage Check the url you are trying to access 
+    else    
+        script.
+            const profileUserId = '!{profileUser._id}';
+            const selectedTab = '!{selectedTab}'; // payload 객체 프로퍼티
+            // payload selectedTab 프로퍼티에 담아 Tab이 선택된 것인지 아닌것인지를 판별하기 위해
+        .profileHeaderContainer 
+            .coverPhotoContainer 
+                
+                .userImageContainer 
+                    img(src=profileUser.profilePic, alt="User profile image")
+            .profileButtonsContainer 
+                if profileUser._id != userLoggedIn._id 
+                    a.profileButton(href=`/messages/${profileUser._id}`)
+                        i.fas.fa-envelope
+                    +createFollowButton(profileUser, true)
+            .userDetailsContainer
+                span.displayName #{profileUser.firstName} #{profileUser.lastName}
+                span.username @#{profileUser.username}
+                span.descripiton #{profileUser.description}
+
+                .followersContainer 
+                    a(href=`/profile/${profileUser.username}/following`)
+                        span.value #{0}
+                        span Following
+                    a(href=`/profile/${profileUser.username}/followers`)
+                        span.value #{0}
+                        span Followers
+        .tabsContainer 
+            +createTab("Posts", `/profile/${profileUser.username}`, selectedTab !== 'replies')
+            +createTab("Replies", `/profile/${profileUser.username}/replies`, selectedTab === 'replies')
+
+
+        .postsContainer
+
+        +createPostModals(userLoggedIn)
+
+block scripts
+
+    script(src="/js/profile.js")

@@ -10,8 +10,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 router.get("/", async (req, res, next) => {
+    // url query string postedBy=${profileUserId}&isReply=false
+    const searchObj = req.query;
 
-    const results = await getPosts({});
+    if(searchObj.isReply !== undefined) {
+        const isReply = searchObj.isReply == 'true';
+        // MongoDB $exists 연산자 : 해당 필드가 존재해야 하는지 존재하지 않아야 하는지를 정함.
+        // profile 페이지 Posts탭에는 답글을 빼고 보여주기 위해 $exists연산자를 이용함.
+        searchObj.replyTo = { $exists: isReply };
+        delete searchObj.isReply;
+    }
+
+    const results = await getPosts(searchObj);
     res.status(200).send(results);
 
 });
