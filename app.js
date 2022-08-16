@@ -35,16 +35,18 @@ const logoutRoute = require('./routes/logoutRoutes');
 const postRoute = require('./routes/postRoutes');
 const profileRoute = require('./routes/profileRoutes');
 
-//API routes
-const postsApiRoute = require('./routes/api/posts');
-
 app.use("/login", loginRoute); // 라우터 모듈 연결.. loginRoute모듈을 /login 하위 경로로 연결하겠다
 app.use("/register", registerRoute);
 app.use("/logout", logoutRoute);
 app.use("/posts", middleware.requireLogin, postRoute);
 app.use("/profile", middleware.requireLogin, profileRoute);
 
+//API routes
+const postsApiRoute = require('./routes/api/posts');
+const usersApiRoute = require('./routes/api/users');
+
 app.use("/api/posts", postsApiRoute);
+app.use('/api/users', usersApiRoute);
 
 app.get("/", middleware.requireLogin, (req, res, next) => {
     // 사이트 루트에 접근할 때 먼저 middleware단계를 실행한다.

@@ -12,7 +12,9 @@ const UserSchema = new Schema({
     password: { type: String, required: true, },
     profilePic: { type: String, default:"/images/profilePic.jpeg" },
     likes: [{ type: Schema.Types.ObjectId, ref: 'Post' }], // 좋아요를 누른 게시글을 추적하기 위해서
-    retweets: [{ type: Schema.Types.ObjectId, ref: 'Post' }] // 마찬가지로 리트윗한 게시글을 추적하기 위해서
+    retweets: [{ type: Schema.Types.ObjectId, ref: 'Post' }], // 마찬가지로 리트윗한 게시글을 추적하기 위해서
+    following: [{ type: Schema.Types.ObjectId, ref: 'User' }], // following 유저 id 저장
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }]  // follwer들의 유저 id 저장
     // timestaps를 추가
 }, { timestamps: true });
 // model: model을 내보내거나 선언하는 함수

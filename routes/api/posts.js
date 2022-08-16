@@ -17,8 +17,8 @@ router.get("/", async (req, res, next) => {
         const isReply = searchObj.isReply == 'true';
         // MongoDB $exists 연산자 : 해당 필드가 존재해야 하는지 존재하지 않아야 하는지를 정함.
         // profile 페이지 Posts탭에는 답글을 빼고 보여주기 위해 $exists연산자를 이용함.
-        searchObj.replyTo = { $exists: isReply };
-        delete searchObj.isReply;
+        searchObj.replyTo = { $exists: isReply }; // searchObj = { isReply: 'true', replyTo : { $exists: isReply }}
+        delete searchObj.isReply; // searchObj = { replyTo : { $exists: isReply }}
     }
 
     const results = await getPosts(searchObj);
@@ -153,6 +153,7 @@ router.post("/:id/retweet", async (req, res, next) => {
     res.status(200).json(post);
 });
 
+// post delete
 router.delete('/:id', (req, res, next) => {
     Post.findOneAndDelete(req.params.id)
         .then(() => res.sendStatus(202))

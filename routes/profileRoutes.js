@@ -22,6 +22,7 @@ router.get("/:username", async (req, res, next) => {
     res.status(200).render("profilePage", payload); 
 });
 
+// replies tab
 router.get("/:username/replies", async (req, res, next) => {
 
     const payload = await getPayload(req.params.username, req.session.user);
@@ -34,7 +35,7 @@ async function getPayload(username, userLoggedIn) {
     let user = await User.findOne({ username: username });
 
     if (user === null) {
-        // username이 username이 아닌 user._id일 경우를 예외처리
+        // username이 username이 아닌 user._id일 경우를 처리
         // 다른 사용자의 프로필을 눌렀을 때를 가정
         user = await User.findById(username);
 

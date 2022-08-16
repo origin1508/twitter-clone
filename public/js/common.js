@@ -232,13 +232,42 @@ document.addEventListener('click', e => {
         })
     };
 
+    // followButton
+    if (target.className.includes('followButton')) {
+        const userId = target.dataset.user;
+
+        fetch(`/api/users/${userId}/follow`, {
+            method: 'PUT',
+            headers: {
+                "Content-Type": "application/json"
+            },
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.following.includes(userId)) {
+                target.classList.add('following');
+                target.innerText = 'Following';
+            }
+            else {
+                target.classList.remove('following');
+                target.innerText = 'Follow'
+            }
+            
+        })
+        .catch(err => {
+            console.log(err)
+        })
+    };
+
     // to view post
     if (target.closest('.post') && target.tagName !== 'BUTTON') {
         
         if(postId !== undefined) {
             window.location.href = '/posts/' + postId;
         }
-    } 
+    };
+    
+    
 });
 
 // element의 class가 post인 것을 찾아서 data-id에 담긴 postId를 가져오는 함수
