@@ -10,7 +10,7 @@ router.get("/", (req, res, next) => {
         pageTitle: req.session.user.username,
         userLoggedIn: req.session.user,
         userLoggedInJS: JSON.stringify(req.session.user),
-        profileUser: req.session.user
+        profileUser: req.session.user // profile을 접속했을 때 보는 profile은 자기꺼이기 때문에 세션정보를 가져옴
     }
     res.status(200).render("profilePage", payload); 
 });
@@ -30,6 +30,24 @@ router.get("/:username/replies", async (req, res, next) => {
     // payload selectedTab 프로퍼티에 담아 Tab이 선택된 것인지 아닌것인지를 판별하기 위해
     res.status(200).render("profilePage", payload); 
 });
+
+// followers, following tab
+router.get("/:username/following", async (req, res, next) => {
+
+    const payload = await getPayload(req.params.username, req.session.user);
+    payload.selectedTab = 'following';
+
+    res.status(200).render("followersAndFollowing", payload); 
+});
+
+router.get("/:username/followers", async (req, res, next) => {
+
+    const payload = await getPayload(req.params.username, req.session.user);
+    payload.selectedTab = 'followers';
+    
+    res.status(200).render("followersAndFollowing", payload); 
+});
+
 
 async function getPayload(username, userLoggedIn) {
     let user = await User.findOne({ username: username });

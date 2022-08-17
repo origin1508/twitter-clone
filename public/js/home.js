@@ -1,6 +1,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('/api/posts', {
+    fetch('/api/posts?followingOnly=true', {
         method: 'GET',
         headers: {
             "Content-Type": "application/json"

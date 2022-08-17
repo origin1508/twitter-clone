@@ -98,8 +98,9 @@ buttonArray
 })
 
 // reply
+// Uncaught TypeError: Cannot read properties of null (reading 'addEventListener') 오류를 해결하기 위해 replyModal && 조건 추가
 // bootstrap이 제공하는 event를 이용
-replyModal.addEventListener('show.bs.modal', (e) => {
+replyModal && replyModal.addEventListener('show.bs.modal', (e) => {
 // $('#replyModal').on('show.bs.modal', () => {})
     const target = e.relatedTarget; // e.target은 modal을 가르킴 개발자도구를 통해 relatedTarget이 button이라는 것을 확인
     const postId = getPostIdFromElement(target);
@@ -120,9 +121,9 @@ replyModal.addEventListener('show.bs.modal', (e) => {
 });
 
 // modal hidden
-replyModal.addEventListener('hidden.bs.modal', () => originalPostContainer.innerText = "");
+replyModal && replyModal.addEventListener('hidden.bs.modal', () => originalPostContainer.innerText = "");
 
-deletePostModal.addEventListener('show.bs.modal', (e) => {
+replyModal && deletePostModal.addEventListener('show.bs.modal', (e) => {
 
         const target = e.relatedTarget;
         const postId = getPostIdFromElement(target);
@@ -131,7 +132,7 @@ deletePostModal.addEventListener('show.bs.modal', (e) => {
 });
 
 // delete post
-deletePostButton.addEventListener('click', (e) => {
+deletePostButton && deletePostButton.addEventListener('click', (e) => {
    const postId = e.target.dataset.id;
    
    fetch(`/api/posts/${postId}`, {
@@ -244,6 +245,9 @@ document.addEventListener('click', e => {
         })
         .then(res => res.json())
         .then(data => {
+
+            let difference = 1;
+
             if (data.following.includes(userId)) {
                 target.classList.add('following');
                 target.innerText = 'Following';
@@ -251,8 +255,19 @@ document.addEventListener('click', e => {
             else {
                 target.classList.remove('following');
                 target.innerText = 'Follow'
+                difference = -1;
             }
+            // TypeError: Cannot read properties of null (reading 'length')
+            // 해당 element가 존재 하지 않는 follow페이지에 접속했을 경우 발생
+            const followersLabel = document.querySelector('#followersValue');
             
+            // 프로필 페이지 있을 때만 존재하기 때문에 길이가 0이 아닌 경우 존재하는 것으로 확인
+            if (followersLabel.length != 0) {
+                const followersText = parseInt(followersLabel.innerText);
+                followersLabel.innerText = followersText + difference;
+
+            }
+
         })
         .catch(err => {
             console.log(err)
