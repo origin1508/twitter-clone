@@ -12,7 +12,7 @@ app.use(express.json());
 
 router.get("/", async (req, res, next) => {
     // url query string postedBy=${profileUserId}&isReply=false
-    const searchObj = req.query;
+    const searchObj = req.query; // { postedBy = profileUserId, isReply="" }
 
     if(searchObj.isReply !== undefined) {
         const isReply = searchObj.isReply == 'true';
